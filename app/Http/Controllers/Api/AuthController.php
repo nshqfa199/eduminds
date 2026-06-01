@@ -117,6 +117,7 @@ class AuthController extends Controller
                 ->with([
                     'grade',            // BelongsTo Grade via current_grade_id
                     'studentprofile',
+                    'interests',
                     'skillProgress.skill',
                     'learningTopics',
                 ])
@@ -211,7 +212,7 @@ class AuthController extends Controller
         }
     }
 
-     /**
+    /**
      * Get current user profile
      */
     public function me(Request $request)
@@ -227,6 +228,7 @@ class AuthController extends Controller
             $student = Student::where('user_id', $user->id)
                 ->with([
                     'grade',
+                    'interests',
                     'studentprofile',
                     'skillProgress.skill',
                     'learningGoals.topic',

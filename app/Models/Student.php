@@ -37,6 +37,15 @@ class Student extends Model
         return $this->hasOne(StudentProfile::class);
     }
 
+    public function interests()
+    {
+        return $this->belongsToMany(
+            Interest::class,
+            'student_interests',
+            'student_id',
+            'interest_id'
+        );
+    }
     public function progresses()
     {
         return $this->hasMany(StudentSkillProgress::class);

@@ -23,6 +23,7 @@ class DatabaseSeeder extends Seeder
             //StudentProfileSeeder::class,
             SkillSeeder::class,
             LearningTopicsSeeder::class,
+            InterestSeeder::class,
             //AchievementSeeder::class,
             //GameSeeder::class,
             //GameSessionSeeder::class,

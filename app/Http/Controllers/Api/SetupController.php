@@ -1,8 +1,11 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\Api;
 
+use App\Http\Controllers\Controller;
+use App\Http\Resources\InterestResource;
 use App\Models\Grade;
+use App\Models\Interest;
 use App\Models\Skill;
 use App\Models\LearningTopic;
 use App\Http\Resources\GradeResource;
@@ -25,17 +28,15 @@ class SetupController extends Controller
     }
 
     /**
-     * Get all skills
+     * Get all Interests
      */
-    public function getSkills()
+    public function getInterests()
     {
-        $skills = Skill::with('grade')
-            ->orderBy('id')
-            ->get();
+        $interests = Interest::orderBy('id')->get();
 
         return response()->json([
             'success' => true,
-            'data' => SkillResource::collection($skills),
+            'data' => InterestResource::collection($interests),
         ]);
     }
 

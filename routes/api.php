@@ -6,7 +6,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\StudentController;
-use App\Http\Controllers\SetupController;
+use App\Http\Controllers\Api\SetupController;
 
 //Route::post('/users', [UserController::class , 'store']);
 
@@ -30,7 +30,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
 
     Route::get('/getGrades', [SetupController::class, 'getGrades']);
-    Route::get('/getSkills', [SetupController::class, 'getSkills']);
+    Route::get('/getInterests', [SetupController::class, 'getInterests']);
     Route::get('/getLearningTopics', [SetupController::class, 'getLearningTopics']);
 
     //Route::post('/forgot-password', [PasswordController::class, 'forgotPassword'])->name('forgotPassword');

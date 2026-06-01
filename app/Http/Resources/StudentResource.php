@@ -26,14 +26,15 @@ class StudentResource extends JsonResource
             'birth_date' => $this->birth_date,
             'avatar' => $this->avatar ?? null,
             'grade' => $this->grade ? new GradeResource($this->grade) : null,
-            'skill_progress' => $this->relationLoaded('skillProgress')
-                ? StudentSkillProgressResource::collection($this->skillProgress)
+            'interests' => $this->relationLoaded('interests')
+                ? InterestResource::collection($this->interests)
                 : [],
+            'skill_progress' => StudentSkillProgressResource::collection($this->skillProgress),
             'learning_topics' => $this->relationLoaded('learningTopics')
                 ? StudentLearningTopicResource::collection($this->learningGoals)
                 : [],
             'profile' => $this->studentprofile ? new StudentProfileResource($this->studentprofile) : null,
-            
+
         ];
     }
 }

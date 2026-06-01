@@ -5,77 +5,66 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\UserResource;
 use App\Models\Student;
+use App\Models\StudentLearningTopic;
+use App\Models\StudentSkillProgress;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\ValidationException;
+use Throwable;
 
 class ProfileController extends Controller
 {
     public function completeProfile(Request $request)
     {
+        $user = $request->user();
+
+        if (! $user) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Unauthenticated',
+            ], 401);
+        }
+
+        if (Student::where('user_id', $user->id)->exists()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Profile already completed',
+            ], 409);
+        }
+
         try {
-            $user = auth()->user();
-
-            if (!$user) {
-                throw new \Exception('Unauthenticated');
-            }
-
-            // Check if profile already completed
-            if (Student::where('user_id', $user->id)->exists()) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Profile already completed',
-                ], 409);
-            }
-
-            // Validate input
             $validated = $request->validate([
-                'name' => 'required|string|min:2|max:255',
-                'gender' => 'required|in:male,female',
-                'birth_date' => 'nullable|date|before:today',
-                'grade_id' => 'required|exists:grades,id',
-                'avatar' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:2048',
+                'name' => ['required', 'string', 'min:2', 'max:255'],
+                'gender' => ['required', 'in:male,female'],
+                'birth_date' => ['nullable', 'date', 'before:today'],
+                'grade_id' => ['required', 'exists:grades,id'],
+                'avatar' => ['nullable', 'image', 'mimes:jpeg,png,jpg,gif,webp', 'max:2048'],
+                
+                'interests' => ['nullable', 'array'],
+                'interests.*' => ['integer', 'exists:interests,id'],
 
-                // Skills — must belong to the chosen grade
-                'skills' => 'nullable|array',
-                'skills.*' => [
-                    'integer',
-                    'exists:skills,id',
-                    function ($attr, $value, $fail) use ($request) {
-                        $belongs = \App\Models\Skill::where('id', $value)
-                            ->where('grade_id', $request->input('grade_id'))
-                            ->exists();
-                        if (!$belongs) {
-                            $fail("Skill #{$value} does not belong to the selected grade.");
-                        }
-                    },
-                ],
-
-                // Learning topics
-                'learning_topics' => 'nullable|array',
-                'learning_topics.*' => 'integer|exists:learning_topics,id',
+                'learning_topics' => ['nullable', 'array'],
+                'learning_topics.*' => ['integer', 'exists:learning_topics,id'],
             ]);
 
-            DB::beginTransaction();
+            $avatarPath = null;
 
-            try {
-                // ── 1. Avatar upload ──────────────────────────────────────
-                $avatar = null;
+            $student = DB::transaction(function () use ($request, $user, $validated, &$avatarPath) {
                 if ($request->hasFile('avatar')) {
-                    $avatar = $request->file('avatar')
-                        ->store('students/avatars', 'public');
+                    $avatarPath = $request->file('avatar')->store('students/avatars', 'public');
                 }
 
-                // ── 2. Create student ─────────────────────────────────────
                 $student = Student::create([
                     'user_id' => $user->id,
                     'name' => $validated['name'],
                     'gender' => $validated['gender'],
                     'birth_date' => $validated['birth_date'] ?? null,
                     'current_grade_id' => $validated['grade_id'],
-                    'avatar' => $avatar,
+                    'avatar' => $avatarPath,
                 ]);
 
-                // ── 3. Create initial game profile ────────────────────────
                 $student->studentprofile()->create([
                     'current_level_id' => 1,
                     'current_points' => 0,
@@ -83,55 +72,37 @@ class ProfileController extends Controller
                     'total_games_played' => 0,
                 ]);
 
-                // ── 4. Seed skill progress rows ───────────────────────────
-                if (!empty($validated['skills'])) {
-                    $skillRows = collect($validated['skills'])->map(fn($skillId) => [
-                        'student_id' => $student->id,
-                        'skill_id' => $skillId,
-                        'status' => 'not_started',
-                        'score' => 0,
-                        'attempts_count' => 0,
-                        'created_at' => now(),
-                        'updated_at' => now(),
-                    ])->toArray();
-
-                    \App\Models\StudentSkillProgress::insert($skillRows);
+                if (! empty($validated['interests'])) {
+                    $student->interests()->sync($validated['interests']);
                 }
 
-                // ── 5. Seed learning goals (priority = array index) ───────
-                if (!empty($validated['learning_topics'])) {
-                    $goalRows = collect($validated['learning_topics'])
+                if (! empty($validated['learning_topics'])) {
+                    $now = now();
+
+                    $topicRows = collect($validated['learning_topics'])
                         ->values()
-                        ->map(fn($topicId, $index) => [
+                        ->map(fn ($topicId, $index) => [
                             'student_id' => $student->id,
                             'learning_topic_id' => $topicId,
-                            'priority' => $index,
-                            'created_at' => now(),
-                            'updated_at' => now(),
-                        ])->toArray();
+                            'priority' => $index + 1,
+                            'created_at' => $now,
+                            'updated_at' => $now,
+                        ])->all();
 
-                    \App\Models\StudentLearningTopic::insert($goalRows);
+                    StudentLearningTopic::insert($topicRows);
                 }
 
-                DB::commit();
+                return $student;
+            });
 
-            } catch (\Exception $e) {
-                DB::rollBack();
-
-                if ($avatar ?? false) {
-                    \Storage::disk('public')->delete($avatar);
-                }
-
-                throw $e;
-            }
-
-            // ── Load all relations for response ───────────────────────────
             $student->load([
                 'grade',
+                'interests',
                 'studentprofile',
                 'skillProgress.skill',
                 'learningTopics',
             ]);
+
             $user->setRelation('student', $student);
 
             return response()->json([
@@ -140,7 +111,7 @@ class ProfileController extends Controller
                 'data' => [
                     'user' => new UserResource($user),
                     'profile_completed' => true,
-                ]
+                ],
             ], 201);
 
         } catch (ValidationException $e) {
@@ -149,8 +120,16 @@ class ProfileController extends Controller
                 'message' => 'Validation failed',
                 'errors' => $e->errors(),
             ], 422);
-        } catch (\Exception $e) {
-            \Log::error('Complete profile error: ' . $e->getMessage());
+
+        } catch (Throwable $e) {
+            if (! empty($avatarPath)) {
+                Storage::disk('public')->delete($avatarPath);
+            }
+
+            Log::error('Complete profile error', [
+                'message' => $e->getMessage(),
+                'user_id' => $user?->id,
+            ]);
 
             return response()->json([
                 'success' => false,
