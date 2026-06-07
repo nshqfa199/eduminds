@@ -15,21 +15,23 @@ class DatabaseSeeder extends Seeder
     public function run(): void
     {
         $this->call([
-            //UserSeeder::class,
-            //StudentSeeder::class,
+            // UserSeeder::class,
+            InterestSeeder::class,
+           
+            LearningTopicsSeeder::class,
+            StudentSeeder::class,
             GradeSeeder::class,
             LevelSeeder::class,
-
-            //StudentProfileSeeder::class,
             SkillSeeder::class,
-            LearningTopicsSeeder::class,
-            InterestSeeder::class,
-            //AchievementSeeder::class,
-            //GameSeeder::class,
-            //GameSessionSeeder::class,
-            //PointsTransactionSeeder::class,
-            //StudentSkillProgressSeeder::class,
-            //AchievementStudentSeeder::class,
+
+            StudentProfileSeeder::class,
+
+            AchievementSeeder::class,
+            GameSeeder::class,
+            GameSessionSeeder::class,
+            PointsTransactionSeeder::class,
+            StudentSkillProgressSeeder::class,
+            AchievementStudentSeeder::class,
         ]);
     }
 }

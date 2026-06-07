@@ -35,4 +35,11 @@ class StudentFactory extends Factory
             'user_id' => $userId,
         ]);
     }
+
+        public function withGrade($gradeId)
+    {
+        return $this->state(fn (array $attributes) => [
+            'current_grade_id' => $gradeId,
+        ]);
+    }
 }

@@ -2,6 +2,8 @@
 
 namespace Database\Seeders;
 
+use App\Models\Interest;
+use App\Models\LearningTopic;
 use App\Models\Student;
 use App\Models\User;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
@@ -18,6 +20,7 @@ class StudentSeeder extends Seeder
     {
         // Ensure there are enough users to associate with students
         // If not, create some users first.
+
         if (User::count() < 20) {
             User::factory(20)->create();
         }
@@ -31,6 +34,19 @@ class StudentSeeder extends Seeder
 
         // Create additional students without explicit user association (if user_id is nullable)
         // or for testing purposes if needed.
-        Student::factory(5)->create(); 
+        Student::factory(5)->create();
+
+        Student::all()->each(function ($student) {
+            $intrestsIds = Interest::inRandomOrder()
+                ->limit(rand(1, 2))
+                ->pluck('id');
+            $student->interests()->attach($intrestsIds);
+
+            $learningTopicId= LearningTopic::inRandomOrder()
+            ->limit(1)
+            ->pluck('id');
+            $student->learningTopics()->attach($learningTopicId);
+        });
+
     }
 }

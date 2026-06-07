@@ -30,7 +30,7 @@ class StudentSkillProgressSeeder extends Seeder
 
         foreach ($students as $student) {
             // Each student has progress in 5-10 random skills
-            $randomSkills = $skills->random(rand(5, 10));
+            $randomSkills = $skills->random(rand(3, 7));
 
             foreach ($randomSkills as $skill) {
                 StudentSkillProgress::factory()->create([

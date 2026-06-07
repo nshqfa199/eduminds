@@ -35,4 +35,11 @@ class GameSession extends Model
     {
         return $this->belongsTo(Skill::class);
     }
+
+    public function grade()
+    {
+        return $this->belongsTo(Grade::class);
+    }
+
+
 }

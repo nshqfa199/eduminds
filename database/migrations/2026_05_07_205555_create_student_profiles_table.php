@@ -12,27 +12,32 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('student_profiles', function (Blueprint $table) {
-        $table->id();
+            $table->id();
 
-        $table->foreignId('student_id')
-            ->unique()
-            ->constrained()
-            ->cascadeOnDelete();
+            $table->foreignId('student_id')
+                ->unique()
+                ->constrained()
+                ->cascadeOnDelete();
 
-        $table->foreignId('current_level_id')
-            ->nullable()
-            ->constrained('levels')
-            ->nullOnDelete();
+            $table->foreignId('current_level_id')
+                ->nullable()
+                ->constrained('levels')
+                ->nullOnDelete();
 
-        $table->integer('current_points')->default(0);
+            $table->foreignId('current_grade_id')
+                ->nullable()
+                ->constrained('grades')
+                ->nullOnDelete();
 
-        $table->integer('current_streak')->default(0);
+            $table->integer('current_points')->default(0);
 
-        $table->integer('longest_streak')->default(0);
+            $table->integer('current_streak')->default(0);
 
-        $table->integer("total_games_played")->default(0);
+            $table->integer('longest_streak')->default(0);
 
-        $table->timestamps();
+            $table->integer('total_games_played')->default(0);
+
+            $table->timestamps();
         });
     }
 

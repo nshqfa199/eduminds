@@ -51,6 +51,7 @@ class Student extends Model
         return $this->hasMany(StudentSkillProgress::class);
     }
 
+    //why not has many?
     public function achievements()
     {
         return $this->belongsToMany(Achievement::class)
