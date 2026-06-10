@@ -17,6 +17,7 @@ class StudentProfileResource extends JsonResource
         if ($this->resource === null) {
             return [];
         }
+
         return [
 
             'id' => $this->id,
@@ -25,9 +26,13 @@ class StudentProfileResource extends JsonResource
 
             'current_points' => $this->current_points,
 
+            'current_streak' => $this->current_streak,
+
             'longest_streak' => $this->longest_streak,
 
             'total_games_played' => $this->total_games_played,
+
+            'last_activity_date' => $this->last_activity_date,
 
         ];
     }

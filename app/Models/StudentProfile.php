@@ -15,7 +15,9 @@ class StudentProfile extends Model
         'current_grade_id',
         'current_points',
         'longest_streak',
-        'total_games_played'
+        'current_streak',
+        'total_games_played',
+        'last_activity_date'
     ];
 
     public function student()

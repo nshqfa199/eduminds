@@ -6,7 +6,6 @@ use App\Http\Controllers\Controller;
 use App\Http\Resources\UserResource;
 use App\Models\Student;
 use App\Models\StudentLearningTopic;
-use App\Models\StudentSkillProgress;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -41,7 +40,7 @@ class ProfileController extends Controller
                 'birth_date' => ['nullable', 'date', 'before:today'],
                 'grade_id' => ['required', 'exists:grades,id'],
                 'avatar' => ['nullable', 'image', 'mimes:jpeg,png,jpg,gif,webp', 'max:2048'],
-                
+
                 'interests' => ['nullable', 'array'],
                 'interests.*' => ['integer', 'exists:interests,id'],
 
@@ -65,11 +64,14 @@ class ProfileController extends Controller
                     'avatar' => $avatarPath,
                 ]);
 
+
                 $student->studentprofile()->create([
                     'current_level_id' => 1,
                     'current_points' => 0,
-                    'longest_streak' => 0,
+                    'longest_streak' => 1,
+                    'current_streak' => 1,
                     'total_games_played' => 0,
+                    'current_grade_id' => $validated['grade_id'],
                 ]);
 
                 if (! empty($validated['interests'])) {

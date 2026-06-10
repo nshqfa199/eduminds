@@ -4034,6 +4034,7 @@ namespace App\Models {
      *
      * @property \Illuminate\Support\Carbon|null $updated_at
      * @property \Illuminate\Support\Carbon|null $created_at
+     * @property string|null $last_activity_date
      * @property int $total_games_played
      * @property int $longest_streak
      * @property int $current_streak
@@ -4051,6 +4052,7 @@ namespace App\Models {
      * @method static \Illuminate\Database\Eloquent\Builder<StudentProfile>|StudentProfile whereCurrentStreak($value)
      * @method static \Illuminate\Database\Eloquent\Builder<StudentProfile>|StudentProfile whereLongestStreak($value)
      * @method static \Illuminate\Database\Eloquent\Builder<StudentProfile>|StudentProfile whereTotalGamesPlayed($value)
+     * @method static \Illuminate\Database\Eloquent\Builder<StudentProfile>|StudentProfile whereLastActivityDate($value)
      * @method static \Illuminate\Database\Eloquent\Builder<StudentProfile>|StudentProfile whereCreatedAt($value)
      * @method static \Illuminate\Database\Eloquent\Builder<StudentProfile>|StudentProfile whereUpdatedAt($value)
      * @method static \Illuminate\Database\Eloquent\Builder<StudentProfile>|StudentProfile newModelQuery()

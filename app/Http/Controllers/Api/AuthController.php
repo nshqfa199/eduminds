@@ -4,14 +4,13 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Http\Resources\UserResource;
-use App\Models\User;
 use App\Models\Student;
-use Illuminate\Auth\Events\PasswordReset;
+use App\Models\User;
+use App\Services\StreakService;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Password;
-use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\ValidationException;
 
 class AuthController extends Controller
@@ -45,7 +44,7 @@ class AuthController extends Controller
                     'profile_completed' => false,
                     'access_token' => $token,
                     'token_type' => 'Bearer',
-                ]
+                ],
             ], 201);
 
         } catch (ValidationException $e) {
@@ -55,7 +54,7 @@ class AuthController extends Controller
                 'errors' => $e->errors(),
             ], 422);
         } catch (\Exception $e) {
-            \Log::error('Registration error: ' . $e->getMessage());
+            \Log::error('Registration error: '.$e->getMessage());
 
             return response()->json([
                 'success' => false,
@@ -70,6 +69,7 @@ class AuthController extends Controller
      */
     public function login(Request $request)
     {
+        $streakService = new StreakService;
         try {
             // Validate input
             $validated = $request->validate([
@@ -81,8 +81,8 @@ class AuthController extends Controller
             $user = User::where('email', strtolower(trim($validated['email'])))->first();
 
             // User not found or password incorrect
-            if (!$user || !Hash::check($validated['password'], $user->password)) {
-                \Log::warning('Failed login attempt for email: ' . $validated['email']);
+            if (! $user || ! Hash::check($validated['password'], $user->password)) {
+                \Log::warning('Failed login attempt for email: '.$validated['email']);
 
                 return response()->json([
                     'success' => false,
@@ -107,7 +107,7 @@ class AuthController extends Controller
             $user->update(['last_login_at' => now()]);
 
             // Generate new token
-            $token = $user->createToken('auth_token_' . now()->timestamp, ['read', 'write'])->plainTextToken;
+            $token = $user->createToken('auth_token_'.now()->timestamp, ['read', 'write'])->plainTextToken;
 
             // Refresh user to get updated last_login_at
             $user->refresh();
@@ -126,6 +126,15 @@ class AuthController extends Controller
             // Inject student into user so UserResource can access it
             $user->setRelation('student', $student);
 
+            $student = $user->student()->first();
+            if ($student && $student->studentprofile) {
+                $streakService->updateStreak($student->studentprofile()->first());
+
+            }
+            // $lastActivity = Carbon::parse($student->studentprofile()->first()->last_activity_date);
+
+            // echo("lastActivity from auth: $lastActivity");
+
             return response()->json([
                 'success' => true,
                 'message' => 'Login successful',
@@ -134,7 +143,7 @@ class AuthController extends Controller
                     'profile_completed' => $student !== null,
                     'access_token' => $token,
                     'token_type' => 'Bearer',
-                ]
+                ],
             ], 200);
 
         } catch (ValidationException $e) {
@@ -144,7 +153,7 @@ class AuthController extends Controller
                 'errors' => $e->errors(),
             ], 422);
         } catch (\Exception $e) {
-            \Log::error('Login error: ' . $e->getMessage());
+            \Log::error('Login error: '.$e->getMessage());
 
             return response()->json([
                 'success' => false,
@@ -153,21 +162,22 @@ class AuthController extends Controller
             ], 500);
         }
     }
+
     public function logout(Request $request)
     {
         try {
             $user = auth()->user();
 
-            if (!$user) {
+            if (! $user) {
                 throw new \Exception('Unauthenticated');
             }
 
             // Scenario: Check if user exists
-            if (!$user) {
+            if (! $user) {
                 return response()->json([
                     'success' => false,
                     'message' => 'User not authenticated',
-                    'status_code' => 401
+                    'status_code' => 401,
                 ], 401);
             }
 
@@ -183,7 +193,7 @@ class AuthController extends Controller
                     'success' => true,
                     'message' => 'Logged out from all devices successfully',
                     'tokens_revoked' => $tokenCount,
-                    'status_code' => 200
+                    'status_code' => 200,
                 ], 200);
             } else {
                 // Revoke only current token
@@ -196,18 +206,18 @@ class AuthController extends Controller
                 return response()->json([
                     'success' => true,
                     'message' => 'Logged out successfully',
-                    'status_code' => 200
+                    'status_code' => 200,
                 ], 200);
             }
 
         } catch (\Exception $e) {
-            \Log::error('Logout error: ' . $e->getMessage());
+            \Log::error('Logout error: '.$e->getMessage());
 
             return response()->json([
                 'success' => false,
                 'message' => 'Logout failed',
                 'error' => config('app.debug') ? $e->getMessage() : 'An error occurred',
-                'status_code' => 500
+                'status_code' => 500,
             ], 500);
         }
     }
@@ -220,7 +230,7 @@ class AuthController extends Controller
         try {
             $user = auth()->user();
 
-            if (!$user) {
+            if (! $user) {
                 throw new \Exception('Unauthenticated');
             }
 
@@ -243,11 +253,11 @@ class AuthController extends Controller
                 'data' => [
                     'user' => new UserResource($user),
                     'profile_completed' => $student !== null,
-                ]
+                ],
             ], 200);
 
         } catch (\Exception $e) {
-            \Log::error('Get profile error: ' . $e->getMessage());
+            \Log::error('Get profile error: '.$e->getMessage());
 
             return response()->json([
                 'success' => false,
@@ -256,5 +266,4 @@ class AuthController extends Controller
             ], 500);
         }
     }
-
 }

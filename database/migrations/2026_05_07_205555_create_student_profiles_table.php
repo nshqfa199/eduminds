@@ -37,6 +37,8 @@ return new class extends Migration
 
             $table->integer('total_games_played')->default(0);
 
+           $table->timestamp('last_activity_date')->nullable();
+
             $table->timestamps();
         });
     }
